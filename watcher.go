@@ -68,6 +68,7 @@ func (e Op) String() string {
 type Event struct {
 	Op
 	Path string
+	New  os.FileInfo
 	os.FileInfo
 }
 
@@ -636,14 +637,14 @@ func (w *Watcher) pollEvents(files map[string]os.FileInfo, evt chan Event,
 			select {
 			case <-cancel:
 				return
-			case evt <- Event{Write, path, info}:
+			case evt <- Event{Write, path, nil, info}:
 			}
 		}
 		if oldInfo.Mode() != info.Mode() {
 			select {
 			case <-cancel:
 				return
-			case evt <- Event{Chmod, path, info}:
+			case evt <- Event{Chmod, path, nil, info}:
 			}
 		}
 	}
@@ -656,6 +657,7 @@ func (w *Watcher) pollEvents(files map[string]os.FileInfo, evt chan Event,
 					Op:       Move,
 					Path:     fmt.Sprintf("%s -> %s", path1, path2),
 					FileInfo: info1,
+					New:      info2,
 				}
 				// If they are from the same directory, it's a rename
 				// instead of a move event.
@@ -680,14 +682,14 @@ func (w *Watcher) pollEvents(files map[string]os.FileInfo, evt chan Event,
 		select {
 		case <-cancel:
 			return
-		case evt <- Event{Create, path, info}:
+		case evt <- Event{Create, path, nil, info}:
 		}
 	}
 	for path, info := range removes {
 		select {
 		case <-cancel:
 			return
-		case evt <- Event{Remove, path, info}:
+		case evt <- Event{Remove, path, nil, info}:
 		}
 	}
 }
